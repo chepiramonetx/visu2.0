@@ -257,13 +257,13 @@
 
     <script>
         const config = {
-            baseUrl: "https://raw.githubusercontent.com/tu-usuario/visu2.0/main/img/",
+            baseUrl: "https://raw.githubusercontent.com/chepiramonetx/visu2.0/refs/heads/main/img/",
             categories: {
                 invertebrados: "invertebrados/",
                 moluscos: "moluscos/",
                 artropodos: "artropodos/",
                 peces: "peces/",
-                anfibios_reptiles: "anfibios_reptiles/",
+                anfibios: "anfibios/",
                 aves: "aves/",
                 mamiferos: "mamiferos/",
                 gimnospermas: "gimnospermas/",
@@ -526,7 +526,7 @@
 "Torpedo torpedo.jpg",
 "Xiphias gladius.png",
 "Zeus faber.jpg"],
-                anfibios_reptiles: ["Acanthodactylus erythrurus.png",
+                anfibios: ["Acanthodactylus erythrurus.png",
 "Alligator mississippiensis.jpg",
 "Alytes obstetricans.JPG",
 "Ambystoma mexicanum.jpg",
@@ -1091,7 +1091,7 @@ const EXAM_CONFIG = {
     moluscosCount: 3,
     artropodosCount: 4,
     pecesCount: 2,
-    anfibios_reptilesCount: 2,
+    anfibiosCount: 2,
     avesCount: 3,
     mamiferosCount: 2,
     gimnospermasCount: 2,
@@ -1224,8 +1224,8 @@ const EXAM_CONFIG = {
                     .map(file => ({ file, category: "artropodos" }));
     const randomPeces = getRandomItems(config.species.peces, EXAM_CONFIG.pecesCount)
                     .map(file => ({ file, category: "peces" }));
-    const randomAnfibios_Reptiles = getRandomItems(config.species.anfibios_reptiles, EXAM_CONFIG.anfibios_reptilesCount)
-                    .map(file => ({ file, category: "anfibios_reptiles" }));
+    const randomAnfibios = getRandomItems(config.species.anfibios, EXAM_CONFIG.anfibiosCount)
+                    .map(file => ({ file, category: "anfibios" }));
     const randomAves = getRandomItems(config.species.aves, EXAM_CONFIG.avesCount)
                     .map(file => ({ file, category: "aves" }));
     const randomMamiferos = getRandomItems(config.species.mamiferos, EXAM_CONFIG.mamiferosCount)
@@ -1247,7 +1247,7 @@ const EXAM_CONFIG = {
     // ... (igual para las demás categorías)
     
     currentList = [...randomInvertebrados, ...randomMoluscos, ...randomArtropodos,
-    ...randomPeces, ...randomAnfibios_Reptiles, ...randomAves, ...randomMamiferos,
+    ...randomPeces, ...randomAnfibios, ...randomAves, ...randomMamiferos,
     ...randomGimnospermas, ...randomMonocotiledoneas, randomDicotiledoneas,
     ...randomHongos, ...randomAlgas, ...randomRocks, ...randomFossils];
     shuffleArray(currentList); // Mezcla final entre categorías
@@ -1413,11 +1413,11 @@ function restartExam() {
         document.getElementById("moluscosBtn").addEventListener("click", () => startMode("moluscos"));
         document.getElementById("artropodosBtn").addEventListener("click", () => startMode("artropodos"));
         document.getElementById("pecesBtn").addEventListener("click", () => startMode("peces"));
-        document.getElementById("anfibiosBtn").addEventListener("click", () => startMode("anfibios_reptiles"));
+        document.getElementById("anfibiosBtn").addEventListener("click", () => startMode("anfibios"));
         document.getElementById("avesBtn").addEventListener("click", () => startMode("aves"));
         document.getElementById("mamiferosBtn").addEventListener("click", () => startMode("mamiferos"));
         document.getElementById("gimnospermasBtn").addEventListener("click", () => startMode("gimnospermas"));
-        document.getElementById("monocotiledoneasBtn").addEventListener("click", () => startMode("monocodiledoneas"));
+        document.getElementById("monocotiledoneasBtn").addEventListener("click", () => startMode("monocotiledoneas"));
         document.getElementById("dicotiledoneasBtn").addEventListener("click", () => startMode("dicotiledoneas"));
         document.getElementById("hongosBtn").addEventListener("click", () => startMode("hongos"));
         document.getElementById("algasBtn").addEventListener("click", () => startMode("algas"));
