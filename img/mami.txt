@@ -72,4 +72,4 @@
 "Tapirus terrestris.jpg",
 "Ursus arctos.jpg",
 "Ursus maritimus.jpg",
-"Vulpes vulpes.jpg",
+"Vulpes vulpes.jpg"

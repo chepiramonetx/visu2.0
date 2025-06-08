@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VISU 2.0</title>
+    <style>
+        /* Pantalla de resultados */
+        #resultsScreen {
+            display: none;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .result-item.correct {
+            background-color: rgba(46, 204, 113, 0.1);
+        }
+        .result-item.incorrect {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        #restartExamBtn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        /* Modo examen */
+        .exam-mode {
+            background-color: #fff9e6;
+            border: 2px solid #ffcc80;
+        }
+        .exam-mode #speciesInput {
+            font-weight: bold;
+            border-color: #ff9800;
+        }
+        #examBtn {
+            background-color: #ff9800;
+        }
+        #examBtn:hover {
+            background-color: #fb8c00;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .modes {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+        .mode-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .mode-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        .mode-btn.active {
+            background-color: #2ecc71;
+        }
+        .game-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        #speciesImage {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto 25px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        .input-group {
+            display: flex;
+            justify-content: center;
+            margin: 25px 0;
+            gap: 10px;
+        }
+        #speciesInput {
+            padding: 12px 15px;
+            width: 60%;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: border 0.3s;
+        }
+        #speciesInput:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        #checkBtn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #checkBtn:hover {
+            background-color: #27ae60;
+        }
+        #result {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 30px;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .correct {
+            color: #27ae60;
+            background-color: rgba(39, 174, 96, 0.1);
+        }
+        .incorrect {
+            color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .stat-box {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-width: 100px;
+            text-align: center;
+        }
+        #loading {
+            text-align: center;
+            font-style: italic;
+            color: #7f8c8d;
+            margin: 20px 0;
+        }
+        #counter {
+            text-align: center;
+            color: #7f8c8d;
+            margin-top: 15px;
+        }
+        .hidden {
+            display: none;
+        }
+        /* Estilo para el botón Saltar */
+        #skipBtn {
+            background-color: #f39c12;
+            color: white;
+            margin: 0 5px;
+            transition: all 0.3s;
+        }
+        #skipBtn:hover {
+            background-color: #e67e22;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div id="resultsScreen">
+        <h2>Resultados del Examen</h2>
+        <p>Has acertado <span id="finalScore">0</span> de <span id="totalQuestions">50</span></p>
+        <div id="resultsList"></div>
+        <button id="restartExamBtn">Hacer otro examen</button>
+    </div>
+    <h1>🌿 VISU 2.0 🐾</h1>
+    <div class="controls">
+        <button id="skipBtn" class="hidden">⏭ Saltar</button>
+    </div>
+    <div class="modes">
+        <!-- Categorías animales -->
+        <button class="mode-btn" id="invertebradosBtn">🪸 Invertebrados</button>
+        <button class="mode-btn" id="moluscosBtn">🐚 Moluscos</button>
+        <button class="mode-btn" id="artropodosBtn">🦗 Artrópodos</button>
+        <button class="mode-btn" id="pecesBtn">🐟 Peces</button>
+        <button class="mode-btn" id="anfibiosBtn">🐸/🐍​ Anfibios/Reptiles</button>
+        <button class="mode-btn" id="avesBtn">🐦 Aves</button>
+        <button class="mode-btn" id="mamiferosBtn">🐆 Mamíferos</button>
+        
+        <!-- Categorías plantas -->
+        <button class="mode-btn" id="gimnospermasBtn">🌲 Gimnospermas</button>
+        <button class="mode-btn" id="monocotiledoneasBtn">🌴 Monocotiledóneas</button>
+        <button class="mode-btn" id="dicotiledoneasBtn">🌺 Dicotiledóneas</button>
+        
+        <!-- Otras categorías -->
+        <button class="mode-btn" id="hongosBtn">🍄 Hongos</button>
+        <button class="mode-btn" id="algasBtn">🌊 Algas y protozoos</button>
+        
+        <!-- Categorías originales -->
+        <button class="mode-btn" id="rocasBtn">🪨 Rocas/Minerales</button>
+        <button class="mode-btn" id="fosilesBtn">🦴 Fósiles</button>
+        
+        <button class="mode-btn" id="examBtn">📝 Modo Examen</button>
+    </div>
+    
+    <div class="game-container">
+        <div id="loading">Selecciona una categoría para comenzar</div>
+        <img id="speciesImage" class="hidden" alt="Imagen de especie">
+        
+        <div class="input-group">
+            <input type="text" id="speciesInput" placeholder="Escribe el nombre científico o común">
+            <button id="checkBtn">Comprobar</button>
+        </div>
+        
+        <div id="result"></div>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div>Acertadas</div>
+                <div id="correctCount">0</div>
+            </div>
+            <div class="stat-box">
+                <div>Falladas</div>
+                <div id="incorrectCount">0</div>
+            </div>
+        </div>
+        
+        <div id="counter"></div>
+    </div>
+
+    <script>
+        const config = {
+            baseUrl: "https://raw.githubusercontent.com/tu-usuario/visu2.0/main/img/",
+            categories: {
+                invertebrados: "invertebrados/",
+                moluscos: "moluscos/",
+                artropodos: "artropodos/",
+                peces: "peces/",
+                anfibios_reptiles: "anfibios_reptiles/",
+                aves: "aves/",
+                mamiferos: "mamiferos/",
+                gimnospermas: "gimnospermas/",
+                monocotiledoneas: "monocotiledoneas/",
+                dicotiledoneas: "dicotiledoneas/",
+                hongos: "hongos/",
+                algas: "algas/",
+                rocas: "rocas_minerales/",
+                fosiles: "fosiles/"
+            },
+            species: {
+                invertebrados: ["Acropora cervicornis.jpg",
+"Actinia equina.png",
+"Aglaophenia pluma.jpg",
+"Alcyonium palmatum.jpg",
+"Anemonia viridis.jpg",
+"Antedon mediterranea.jpg",
+"Aphrodita aculeata.jpg",
+"Ascaris lumbricoides.jpg",
+"Ascidia mentula.jpeg",
+"Asterias rubens.jpg",
+"Astropecten aranciacus.png",
+"Aurelia aurita.jpg",
+"Axinella infundibuliformis.jpg",
+"Balanophyllia europaea.jpg",
+"Beroe ovata.jpg",
+"Brissus unicolor.jpg",
+"Calliactis parasitica.png",
+"Cestum veneris.jpg",
+"Chrysaora hysoscella.jpg",
+"Cidaris cidaris.jpg",
+"Cladocora caespitosa.jpg",
+"Comaster nobilis.jpg",
+"Corallium rubrum.jpg",
+"Cotylorhiza tuberculata.jpg",
+"Cucumaria planci.jpg",
+"Dugesia gonocephala.jpg",
+"Echinaster sepositus.jpg",
+"Echinococcus granulosus.JPG",
+"Enterobius vermicularis.jpg",
+"Eunicella verrucosa.JPG",
+"Fasciola hepatica.jpg",
+"Fungia fungites.jpg",
+"Hippospongia communis.jpg",
+"Hirudo medicinalis.jpg",
+"Holothuria forskali.jpeg",
+"Holothuria tubulosa.jpg",
+"Hydra viridis.jpg",
+"Ircinia fasciculata.jpg",
+"Lophelia pertusa.jpg",
+"Lumbricus terrestris.jpg",
+"Meandrina meandrites.jpg",
+"Nereis diversicolor.jpg",
+"Ophiocomina nigra.jpg",
+"Ophiura ophiura.jpg",
+"Paracentrotus lividus.jpg",
+"Pelagia noctiluca.jpg",
+"Pennatula rubra.jpeg",
+"Physalia physalis.png",
+"Porpita porpita.png",
+"Rhizostoma pulmo.jpg",
+"Sabella spallanzanii.png",
+"Spongia officinalis.jpg",
+"Suberites domuncula.jpg",
+"Sycon raphanus.jpeg",
+"Taenia solium.jpg",
+"Trichinella spiralis.jpg",
+"Tubipora musica.jpg",
+"Velella velella.jpg"],
+                moluscos: ["Acanthocardia aculeata.jpg",
+"Arca noae.JPG",
+"Architectonica maxima.JPG",
+"Architectonica perspectiva.JPG",
+"Argonauta argo.jpg",
+"Arion ater.jpg",
+"Bolinus brandaris.jpg",
+"Cerastoderma edule.jpg",
+"Cerithium rupestre.jpg",
+"Chamelea gallina.jpg",
+"Conus mediterraneus.JPG",
+"Crassostrea angulata.jpg",
+"Cymbium pepo.jpg",
+"Cypraea tigris.JPG",
+"Dentalium vulgare.jpg",
+"Eledone moschata.jpg",
+"Ensis ensis.jpg",
+"Gibbula magus.JPG",
+"Glaucus atlanticus.jpg",
+"Glossus humanus.jpg",
+"Haliotis tuberculata.JPG",
+"Helix aspersa.jpg",
+"Hexaplex trunculus.jpg",
+"Iberus marmoratus.jpeg",
+"Lambis lambis.JPG",
+"Lambis millepeda.jpg",
+"Lambis scorpius.JPG",
+"Lima lima.jpg",
+"Littorina littorea.JPG",
+"Loligo vulgaris.jpg",
+"Luria lurida.jpg",
+"Mytilus galloprovincialis.jpg",
+"Nautilus pompilius.jpg",
+"Neverita josephinia.JPG",
+"Octopus vulgaris.jpg",
+"Otala lactea.JPG",
+"Otala punctata.jpg",
+"Patella rustica.jpg",
+"Pecten jacobaeus.jpg",
+"Pecten maximus.jpg",
+"Pinna nobilis.jpg",
+"Planorbis planorbis.jpg",
+"Rumina decollata.jpeg",
+"Sepia elegans.jpg",
+"Sepia officinalis.jpg",
+"Sepia orbignyana.jpg",
+"Spirula spirula.jpg",
+"Strombus gigas.jpg",
+"Telescopium telescopium.JPG",
+"Theba pisana.jpeg",
+"Trivia monacha.jpg",
+"Turritella communis.JPG",
+"Vampyroteuthis infernalis.jpg",
+"Xenophora crispa.JPG"],
+                artropodos: ["Acherontia atropos.jpg",
+"Adalia bipunctata.jpg",
+"Aedes aegypti.jpg",
+"Anax imperator.jpg",
+"Aphis glycines.jpg",
+"Apis mellifera.jpg",
+"Arctia festiva.jpg",
+"Argiope bruennichi.jpg",
+"Argiope lobata.jpg",
+"Armadillium vulgare.jpg",
+"Autographa gamma.jpg",
+"Bacillus rossius.jpg",
+"Blaps gigas.jpg",
+"Blattella germanica.jpg",
+"Bombus terrestris.jpg",
+"Bombylius major.jpg",
+"Bombyx mori (larva).png",
+"Bombyx mori.jpg",
+"Buthus occitanus.jpg",
+"Calopteryx virgo.jpg",
+"Cancer pagurus.png",
+"Carcinus mediterraneus.jpg",
+"Cerambyx cerdo.jpg",
+"Cetonia aurata.jpg",
+"Chiton olivaceus.png",
+"Cicada orni.jpg",
+"Cicindela campestris.jpg",
+"Coccinella quinquepunctata.jpg",
+"Coccinella septempunctata.JPG",
+"Coccinella undecimpunctata.JPG",
+"Copris lunaris.jpg",
+"Cordulegaster boltonii.png",
+"Corixa punctata.jpg",
+"Crangon crangon.jpg",
+"Culex pipiens.jpg",
+"Danaus plexippus.jpg",
+"Drosophila melanogaster.jpg",
+"Ephemera danica.jpg",
+"Forficula auricularia.jpg",
+"Formica rufa.jpg",
+"Gerris lacustris.jpg",
+"Gonepteryx cleopatra.jpg",
+"Gryllotalpa gryllotalpa.jpeg",
+"Gryllus campestris.jpg",
+"Homarus vulgaris.jpg",
+"Iris oratoria.JPG",
+"Ixodes ricinus.jpg",
+"Julus terrestris.jpg",
+"Lampyris noctiluca.jpg",
+"Latrodectus tredecimguttatus.png",
+"Lepas anatifera.jpg",
+"Libellula depressa.jpg",
+"Limulus polyphemus.jpg",
+"Locusta migratoria.jpg",
+"Loxosceles laeta.jpg",
+"Lucanus cervus.jpg",
+"Lucilia caesar.jpg",
+"Lycosa tarantula.jpeg",
+"Maja squinado.jpg",
+"Mantis religiosa.jpg",
+"Milnesium tardigradum.jpg",
+"Musca domestica.jpg",
+"Mylabris uhagonii.jpg",
+"Myrmeleon formicarius.jpg",
+"Necora puber.jpg",
+"Nepa cinerea.jpg",
+"Nezara viridula.jpg",
+"Notonecta glauca.jpg",
+"Nymphalis antiopa.jpg",
+"Oryctes nasicornis.jpg",
+"Pagurus bernhardus.jpg",
+"Papilio machaon.jpg",
+"Parapenaeus longirostris.jpg",
+"Pediculus humanus.jpg",
+"Peripatus juanensis.jpeg",
+"Periplaneta americana.jpg",
+"Perla grandis.jpeg",
+"Phyllium giganteum.jpg",
+"Pollicipes cornucopia.jpeg",
+"Procambarus clarkii.jpg",
+"Pulex irritans.jpg",
+"Pycnogonum litorale.jpg",
+"Pyrrhocoris apterus.jpeg",
+"Rhynchophorus ferrugineus.jpg",
+"Saturnia pyri.jpg",
+"Scarabaeus sacer.jpg",
+"Scolopendra cingulata.JPG",
+"Semibalanus balanoides.jpg",
+"Sphinx pinastri.jpg",
+"Squilla mantis.jpg",
+"Sympetrum sanguineum.jpg",
+"Tettigonia viridissima.jpg",
+"Thaumetopoea pityocampa (larva).jpg",
+"Thaumetopoea pityocampa.jpg",
+"Truxalis nasuta.jpg",
+"Vanessa atalanta.jpg",
+"Vespa crabro.jpg",
+"Vespula vulgaris.jpg",
+"Xantho poressa.jpg",
+"Zerynthia rumina.jpeg"],
+                peces: ["Anguilla anguilla.jpg",
+"Aphanius iberus.png",
+"Barbus barbus.jpg",
+"Belone belone.jpg",
+"Carcharodon carcharias.jpg",
+"Chimaera monstrosa.jpg",
+"Dicentrarchus labrax.jpg",
+"Esox lucius.jpg",
+"Gambusia nobilis.jpg",
+"Hippocampus guttulatus.png",
+"Hippocampus hippocampus.jpg",
+"Lampetra fluviatilis.jpg",
+"Lophius piscatorius.jpg",
+"Melanocetus johnsonii.png",
+"Merluccius merluccius.png",
+"Mobula mobular.jpg",
+"Mola mola.jpg",
+"Mugil cephalus.jpg",
+"Muraena helena.jpg",
+"Myxine glutinosa.jpg",
+"Perca fluviatilis.jpg",
+"Petromyzon marinus.jpg",
+"Pristis pristis.jpg",
+"Psetta maxima.jpg",
+"Raja clavata.jpg",
+"Remora remora.jpg",
+"Salmo trutta.jpg",
+"Sardina pilchardus.jpg",
+"Scorpaena scrofa.jpg",
+"Scyliorhinus canicula.jpg",
+"Silurus glanis.png",
+"Solea solea.jpeg",
+"Sparus aurata.jpg",
+"Syngnathus acus.jpg",
+"Thunnus thynnus.jpg",
+"Torpedo marmorata.jpg",
+"Torpedo torpedo.jpg",
+"Xiphias gladius.png",
+"Zeus faber.jpg"],
+                anfibios_reptiles: ["Acanthodactylus erythrurus.png",
+"Alligator mississippiensis.jpg",
+"Alytes obstetricans.JPG",
+"Ambystoma mexicanum.jpg",
+"Bombina bombina.jpg",
+"Bufo spinosus.jpg",
+"Caiman crocodilus.jpg",
+"Caretta caretta.jpeg",
+"Chalcides bedriagai.jpg",
+"Chamaeleo chamaeleon.JPG",
+"Chelonia mydas.jpg",
+"Crocodylus niloticus.jpg",
+"Epidalea calamita.jpg",
+"Gavialis gangeticus.jpg",
+"Hemidactylus turcicus.jpg",
+"Hemorrhois hippocrepis.jpg",
+"Hyla meridionalis.jpg",
+"Hyla molleri.jpg",
+"Ichthyosaura alpestris.jpeg",
+"Iguana iguana.jpg",
+"Lacerta bilineata.JPG",
+"Malpolon monspessulanus.jpg",
+"Mauremys leprosa.jpg",
+"Naja naja.jpeg",
+"Natrix astreptophora.jpg",
+"Natrix maura.jpg",
+"Pelobates cultripes.jpg",
+"Pelophylax perezi.jpg",
+"Pleurodeles waltl.jpg",
+"Podarcis hispanicus.JPG",
+"Salamandra salamandra.jpg",
+"Sphenodon punctatus.jpg",
+"Tarentola mauritanica.jpg",
+"Testudo graeca.jpg",
+"Testudo hermanni.jpg",
+"Timon lepidus.jpg",
+"Triturus pygmaeus.jpg",
+"Vipera latastei.jpg",
+"Zamenis scalaris.jpg"],
+                aves: ["Accipiter nisus.jpg",
+"Aegypius monachus.jpg",
+"Agapornis roseicollis.jpg",
+"Alcedo atthis.jpg",
+"Alectoris rufa.jpg",
+"Anas crecca.jpg",
+"Anas platyrhynchos.jpg",
+"Anser anser.jpg",
+"Apus apus.jpg",
+"Aquila adalberti.jpg",
+"Aquila chrysaetos.jpg",
+"Aquila fasciata.png",
+"Ardea alba.jpg",
+"Ardea cinerea.jpg",
+"Ardea ibis.jpg",
+"Ardea purpurea.jpg",
+"Asio otus.jpg",
+"Astur gentilis.jpg",
+"Athene noctua.jpg",
+"Bubo bubo.jpg",
+"Buteo buteo.png",
+"Caprimulgus europaeus.jpg",
+"Carduelis carduelis.jpg",
+"Charadrius alexandrinus.jpg",
+"Chloris chloris.jpg",
+"Ciconia ciconia.jpg",
+"Ciconia nigra.jpg",
+"Coloeus monedula.jpg",
+"Columba livia.jpg",
+"Columba palumbus.jpg",
+"Corvus corax.jpg",
+"Corvus corone.jpg",
+"Corvus frugilegus.jpg",
+"Cuculus canorus.jpg",
+"Curruca melanocephala.jpg",
+"Cyanopica cooki.jpg",
+"Cygnus olor.jpg",
+"Dendrocopos major.jpg",
+"Egretta garzetta.jpg",
+"Erithacus rubecula.jpg",
+"Falco peregrinus.jpg",
+"Falco tinnunculus.jpg",
+"Fulica atra.jpg",
+"Galerida cristata.jpg",
+"Gallus gallus domesticus.png",
+"Garrulus glandarius.jpg",
+"Grus grus.jpg",
+"Gypaetus barbatus.jpg",
+"Gyps fulvus.jpeg",
+"Himantopus himantopus.jpg",
+"Hirundo rustica.jpg",
+"Larus argentatus.jpg",
+"Larus audouinii.jpg",
+"Larus melanocephalus.jpg",
+"Larus michahellis.jpg",
+"Limosa limosa.jpg",
+"Loxia curvirostra.jpg",
+"Marmaronetta angustirostris.jpg",
+"Meleagris gallopavo.jpg",
+"Merops apiaster.jpg",
+"Milvus migrans.jpg",
+"Milvus milvus.jpg",
+"Morus bassanus.jpg",
+"Motacilla alba.jpg",
+"Myiopsitta monachus.jpg",
+"Numida meleagris.jpg",
+"Oriolus oriolus.jpg",
+"Otis tarda.jpg",
+"Otus scops.jpg",
+"Oxyura leucocephala.jpg",
+"Pandion haliaetus.jpg",
+"Panurus biarmicus.jpg",
+"Parus major.jpg",
+"Passer domesticus.jpg",
+"Pavo cristatus.jpg",
+"Pelecanus onocrotalus.jpg",
+"Phalacrocorax aristotelis.jpg",
+"Phalacrocorax carbo.jpg",
+"Phoenicopterus roseus.jpg",
+"Pica pica.jpg",
+"Picus sharpei.jpg",
+"Podiceps cristatus.jpg",
+"Pyrrhocorax graculus.jpg",
+"Pyrrhocorax pyrrhocorax.jpg",
+"Recurvirostra avosetta.jpg",
+"Serinus serinus.jpg",
+"Spatula clypeata.jpg",
+"Sterna hirundo.jpg",
+"Streptopelia decaocto.jpg",
+"Streptopelia turtur.jpg",
+"Strix aluco.jpg",
+"Sturnus unicolor.jpg",
+"Sturnus vulgaris.jpg",
+"Tachybaptus ruficollis.JPG",
+"Tadorna tadorna.jpg",
+"Tetrax tetrax.jpg",
+"Troglodytes troglodytes.jpg",
+"Turdus merula.jpg",
+"Tyto alba.jpg",
+"Upupa epops.jpg"],
+                mamiferos: ["Alces alces.jpg",
+"Ammotragus lervia.jpg",
+"Bison bison.jpg",
+"Bos primigenius taurus.jpg",
+"Bradypus tridactylus.jpeg",
+"Camelus dromedarius.jpg",
+"Camelus ferus.jpg",
+"Canis aureus.jpg",
+"Canis latrans.jpg",
+"Canis lupus.jpg",
+"Capra pyrenaica.jpg",
+"Castor fiber.jpg",
+"Ceratotherium simum.jpg",
+"Cervus elaphus.jpg",
+"Connochaetes taurinus.jpg",
+"Crocidura russula.jpg",
+"Crocuta crocuta.jpg",
+"Dama dama.jpg",
+"Elephas maximus.jpg",
+"Eliomys quercinus.jpg",
+"Equus africanus (asinus).jpg",
+"Equus ferus caballus.png",
+"Equus grevyi.jpg",
+"Equus zebra.jpg",
+"Erinaceus europaeus.jpg",
+"Felis silvestris.png",
+"Galemys pyrenaicus.jpg",
+"Genetta genetta.jpg",
+"Giraffa camelopardalis.jpg",
+"Gorilla gorilla.jpg",
+"Gulo gulo.jpg",
+"Hippopotamus amphibius.jpeg",
+"Lama glama.jpg",
+"Lemur catta.jpg",
+"Lepus granatensis.jpg",
+"Loxodonta africana.jpg",
+"Lutra lutra.JPG",
+"Lynx pardinus.jpg",
+"Macropus giganteus.jpg",
+"Macropus rufus.jpg",
+"Mandrillus sphinx.jpg",
+"Marmota marmota.jpg",
+"Martes foina.jpg",
+"Martes martes.jpg",
+"Meles meles.jpg",
+"Mephitis mephitis.jpg",
+"Monachus monachus.jpg",
+"Mus musculus.jpg",
+"Mustela nivalis.jpg",
+"Myrmecophaga tridactyla.jpg",
+"Orcinus orca.jpg",
+"Ornithorhynchus anatinus.jpg",
+"Oryctolagus cuniculus.jpg",
+"Ovis orientalis aries.jpeg",
+"Ovis orientalis musimon.jpg",
+"Pan troglodytes.jpg",
+"Panthera leo.jpg",
+"Panthera onca.jpg",
+"Panthera pardus.jpeg",
+"Panthera tigris.jpg",
+"Pipistrellus pipistrellus.jpg",
+"Pongo pygmaeus.png",
+"Procyon lotor.jpg",
+"Puma concolor.jpg",
+"Rattus rattus.jpg",
+"Rhinoceros unicornis.jpg",
+"Rhinolophus ferrumequinum.jpg",
+"Rupicapra pyrenaica.jpg",
+"Sciurus vulgaris.jpg",
+"Sus scrofa.jpg",
+"Talpa occidentalis.jpg",
+"Tapirus terrestris.jpg",
+"Ursus arctos.jpg",
+"Ursus maritimus.jpg",
+"Vulpes vulpes.jpg"],
+                gimnospermas: ["Abies alba.jpg",
+"Abies pinsapo.jpg",
+"Adiantum capillus-veneris.jpg",
+"Cupressus sempervirens.jpg",
+"Didymodon ferrugineus.jpg",
+"Equisetum palustre.jpeg",
+"Equisetum ramosissimum.jpg",
+"Ginkgo biloba.jpg",
+"Isoetes lacustris.jpeg",
+"Juniperus communis.jpg",
+"Juniperus oxycedrus.jpg",
+"Juniperus phoenicea.jpg",
+"Juniperus thurifera.jpg",
+"Marchantia polymorpha.jpeg",
+"Phyllitis scolopendrium.jpg",
+"Pinus canariensis.jpeg",
+"Pinus halepensis.jpg",
+"Pinus nigra.jpg",
+"Pinus pinaster.jpg",
+"Pinus pinea.jpg",
+"Polypodium cambricum.jpeg",
+"Pteridium aquilinum.jpeg",
+"Taxus baccata.jpg",
+"Tetraclinis articulata.jpg",
+"Weltwitschia mirabilis.jpg"],
+                monocotiledoneas: ["Agave americana.jpg",
+"Allium sativum.jpeg",
+"Aloe vera.jpg",
+"Arundo donax.jpg",
+"Asparagus officinalis.jpg",
+"Avena sativa.jpg",
+"Chamaerops humilis.jpg",
+"Crocus sativus.jpg",
+"Hordeum murinum.JPG",
+"Hordeum vulgare.jpg",
+"Juncus acutus.jpg",
+"Lapiedra martinezii.jpg",
+"Lygeum spartum.JPG",
+"Narcissus nevadensis.JPG",
+"Narcissus serotinus.jpeg",
+"Ophrys apifera.jpg",
+"Ophrys papilionacea.jpg",
+"Ophrys speculum.jpg",
+"Phoenix canariensis.jpg",
+"Phoenix dactylifera.jpg",
+"Phragmites australis.jpg",
+"Posidonia oceanica (pelota).jpg",
+"Posidonia oceanica.jpg",
+"Stipa tenacissima.jpg",
+"Tulipa sylvestris.jpg",
+"Washingtonia filifera.jpg",
+"Zea mays.jpeg",
+"Zostera marina.jpg"],
+                dicotiledoneas: ["Acer campestre.jpg",
+"Acer granatense.jpg",
+"Acer monspessulanum.jpg",
+"Acer pseudoplatanus.jpg",
+"Andryala ragusina.jpg",
+"Arbutus unedo.jpg",
+"Asphodelus ayardii.jpg",
+"Atriplex glauca.jpg",
+"Bellis sylvestris.jpg",
+"Betula pendula.jpg",
+"Bougainvillea glabra.jpeg",
+"Calendula arvensis.jpg",
+"Cannabis sativa.jpg",
+"Capparis spinosa.jpg",
+"Capsella bursa-pastoris.jpg",
+"Castanea sativa.jpg",
+"Casuarina cunninghamiana.jpeg",
+"Centaurea aspera.jpg",
+"Centaurea saxicola.jpg",
+"Ceratonia siliqua.jpg",
+"Cistus albidus.jpg",
+"Cistus heterophyllus subsp carthaginensis.jpg",
+"Citrus limon.jpg",
+"Citrus sinensis.jpg",
+"Convolvulus althaeoides.jpg",
+"Convolvulus arvensis.jpg",
+"Coronilla minima.JPG",
+"Diplotaxis virgata.jpg",
+"Echium creticum.JPG",
+"Echium vulgare.jpg",
+"Eruca sativa.jpg",
+"Euphorbia serrata.jpeg",
+"Ferula communis.jpg",
+"Ficus carica.jpg",
+"Fraxinus ornus.jpg",
+"Fumaria capreolata.jpg",
+"Fumaria officinalis.jpg",
+"Hedera helix.jpg",
+"Helianthemum almeriense.jpg",
+"Helianthus annuus.jpg",
+"Heliotropium europaeum.jpg",
+"Hypericum perforatum.jpg",
+"Ilex aquifolium.jpg",
+"Lantana camara.jpg",
+"Laurus nobilis.webp",
+"Lavandula dentata.jpg",
+"Limonium lobatum.jpg",
+"Lobularia maritima.jpg",
+"Lysimachia arvensis.jpg",
+"Malva parviflora.jpeg",
+"Matricaria chamomilla.jpeg",
+"Moricandia arvensis.jpg",
+"Morus alba.jpg",
+"Morus nigra.jpg",
+"Nerium oleander.jpg",
+"Nicotiana glauca.jpg",
+"Olea europaea.jpg",
+"Opuntia maxima.jpg",
+"Oxalis pes-caprae.jpg",
+"Pallenis spinosa.jpg",
+"Papaver rhoeas.jpg",
+"Papaver somniferum.jpg",
+"Periploca angustifolia.jpg",
+"Pistacia lentiscus.jpg",
+"Platanus hispanica.jpg",
+"Populus alba.jpg",
+"Prunus domestica.jpg",
+"Prunus dulcis.jpg",
+"Prunus persica.jpg",
+"Punica granatum.jpg",
+"Quercus coccifera.jpg",
+"Quercus ilex.jpg",
+"Quercus robur.jpg",
+"Quercus suber.jpg",
+"Reichardia tingitana.jpg",
+"Retama sphaerocarpa.jpg",
+"Rhamnus alaternus.jpg",
+"Rhamnus lycioides.jpg",
+"Rosmarinus officinalis.jpg",
+"Rubus ulmifolius.jpg",
+"Salicornia europaea.JPG",
+"Salsola genistoides.jpg",
+"Salsola oppositifolia.jpg",
+"Santolina chamaecyparissus.png",
+"Schinus molle.jpg",
+"Silybum marianum.jpg",
+"Suaeda vera.jpg",
+"Tamarix canariensis.JPG",
+"Thymus vulgaris.jpg",
+"Ulmus minor.jpg",
+"Urtica urens.jpg",
+"Vicia faba.jpg",
+"Vitis vinifera.jpg",
+"Ziziphus lotus.jpg"],
+                hongos: ["Agaricus bisporus.jpg",
+"Agaricus campestris.jpg",
+"Amanita caesarea.JPG",
+"Amanita muscaria.jpg",
+"Amanita pantherina.jpg",
+"Amanita phalloides.jpg",
+"Aspergillus niger.jpg",
+"Boletus edulis.jpg",
+"Boletus satanas.jpg",
+"Caloplaca ferruginea.jpg",
+"Clathrus ruber.jpg",
+"Fomitopsis pinicola.jpg",
+"Geastrum rufescens.jpg",
+"Lactarius deliciosus.jpg",
+"Lepiota cristata.jpg",
+"Lycoperdon perlatum.jpg",
+"Marasmius oreades.jpg",
+"Morchella esculenta.jpg",
+"Mucor mucedo.jpg",
+"Mycena seynii.jpg",
+"Penicillium chrysogenum.jpg",
+"Ramalina farinacea.jpg",
+"Rhizopus nigricans.jpg",
+"Rhizopus nigricans.png",
+"Russula sanguinea.jpg",
+"Saccharomyces cerevisiae.jpg",
+"Terfezia claveryi.jpg",
+"Tuber melanosporum.jpg",
+"Xanthoria parietina.jpg"],
+                algas: ["Acetabularia acetabulum.jpg",
+"Amoeba proteus.jpg",
+"Caulerpa prolifera.jpg",
+"Chara vulgaris.jpg",
+"Chroococcus turgidus.jpg",
+"Corallina mediterranea.jpg",
+"Enteromorpha compressa.JPG",
+"Fucus spiralis.jpeg",
+"Laminaria saccharina.jpg",
+"Leishmania donovani.jpg",
+"Micrasterias rotata.jpg",
+"Noctiluca scintillans.jpg",
+"Noctiluca scintillans.png",
+"Oscillatoria limosa.jpg",
+"Padina pavonica.jpg",
+"Paramecium caudatum.jpg",
+"Pediastrum boryanum.jpg",
+"Pinnularia viridis.jpg",
+"Plasmodium malariae.jpg",
+"Rivularia bullata.jpg",
+"Rivularia bullata.png",
+"Spirogyra elegans.JPG",
+"Spirulina platensis.jpg",
+"Trichomonas vaginalis.jpg",
+"Trypanosoma cruzi.jpg",
+"Ulva rigida.jpg",
+"Valonia utricularis.jpg",
+"Volvox aureus.png"],
+                rocas: ["Agata.jpg",
+"Andesita.jpg",
+"Antimonita.jpg",
+"Antracita.jpg",
+"Aragonito.jpg",
+"Arenisca.jpg",
+"Azufre.jpg",
+"Azurita.jpg",
+"Baritina.jpg",
+"Basalto.jpg",
+"Bauxita.jpg",
+"Berilo.jpg",
+"Biotita.jpg",
+"Blenda.jpg",
+"Brecha.jpg",
+"Calcita.jpg",
+"Calcopirita.jpg",
+"Caliza arrecifal.jpg",
+"Caliza nodulosa.jpg",
+"Caliza nummulitica.jpg",
+"Caliza oolitica.jpg",
+"Cinabrio.jpg",
+"Clorita.jpg",
+"Cobre.jpg",
+"Conglomerado.jpg",
+"Corindon.jpg",
+"Cuarcita.jpg",
+"Cuarzo ahumado.jpg",
+"Cuarzo amatista.jpg",
+"Cuarzo citrino.jpg",
+"Cuarzo cristal de roca.jpg",
+"Cuarzo Jacinto de Compostela.jpg",
+"Cuarzo ojo de tigre.jpg",
+"Cuarzo rosa.jpg",
+"Cuarzo rutilado.jpg",
+"Cuarzo.jpg",
+"Diorita.jpg",
+"Dolomia.jpg",
+"Eclogita.jpg",
+"Epidota.jpg",
+"Estaurolita.JPG",
+"Fluorita.jpg",
+"Gabro.png",
+"Galena.jpg",
+"Gneis.jpg",
+"Goethita.jpg",
+"Grafito.jpg",
+"Granate.jpg",
+"Granito.jpg",
+"Granodiorita.jpg",
+"Halita.jpg",
+"Hulla.jpg",
+"Lumaquela.jpg",
+"Lutita.JPG",
+"Magnetita.jpg",
+"Malaquita.jpg",
+"Marga.jpg",
+"Margocaliza.jpg",
+"Marmol.jpg",
+"Micaesquisto con granates.jpg",
+"Moscovita.jpg",
+"Obsidiana.jpg",
+"Ofita.jpg",
+"Olivino.jpg",
+"Ortosa.jpg",
+"Pegmatita.jpg",
+"Pirita.jpg",
+"Pirolusita.jpg",
+"Pizarra sedimentaria.jpg",
+"Pizarra.jpg",
+"Plata.jpg",
+"Pumita.jpg",
+"Riolita.jpg",
+"Rosa del desierto.jpg",
+"Serpentinita.jpg",
+"Sienita.jpg",
+"Silex.jpg",
+"Silvina.jpg",
+"Talco.jpg",
+"Travertino.jpg",
+"Turba.jpg",
+"Yeso.jpg"],
+                fosiles: ["Anomalocaris.jpg",
+"Archaeopteryx.jpg",
+"Belemnites.jpg",
+"Calamites.jpg",
+"Calceola.jpg",
+"Calymene.jpg",
+"Ceratites.JPG",
+"Cidaris.jpg",
+"Clypeaster.jpg",
+"Concavenator corcovatus.jpg",
+"Conocoryphe.jpg",
+"Conus.jpg",
+"Crassostrea.jpg",
+"Cruziana.JPG",
+"Cyclolites.jpg",
+"Dalmanites.jpg",
+"Didymograptus.jpg",
+"Encrinus.JPG",
+"Epipeltoceras.jpg",
+"Estromatolito.JPG",
+"Eurypterida.png",
+"Fusulina.png",
+"Goniatites.jpg",
+"Graptolites.jpg",
+"Gregoryceras.jpg",
+"Gryphaea.jpg",
+"Hallucigenia.jpg",
+"Heteraster.jpg",
+"Hildoceras.jpg",
+"Hippurites.JPG",
+"Lepidodendron.jpg",
+"Lytoceras.jpg",
+"Nummulites.jpg",
+"Opabinia.jpg",
+"Orbitolina.jpg",
+"Orthoceras.jpg",
+"Paradoxides.jpg",
+"Pecten.jpg",
+"Phacops.jpg",
+"Phylloceras.jpg",
+"Placosmilia.jpg",
+"Planorbis.jpg",
+"Pygope.jpg",
+"Radiolites.jpg",
+"Rhynchonella.jpg",
+"Spirifer.jpg",
+"Spirograptus.jpg",
+"Strombus.jpg",
+"Terebratula.jpg",
+"Tetragonites.JPG",
+"Turritella.jpg"]
+            }
+        };
+
+        // Variables de estado
+        let isExamMode = false;
+let examScore = 0;
+let examResults = [];
+let currentExamAnswers = [];
+
+const EXAM_CONFIG = {
+    invertebradosCount: 3,
+    moluscosCount: 3,
+    artropodosCount: 4,
+    pecesCount: 2,
+    anfibios_reptilesCount: 2,
+    avesCount: 3,
+    mamiferosCount: 2,
+    gimnospermasCount: 2,
+    monocotiledoneasCount: 4,
+    dicotiledoneasCount: 10,
+    hongosCount: 2,
+    algasCount: 3,
+    rocasCount: 6,
+    fosilesCount: 4
+};
+        let currentMode = null;
+        let currentList = [];
+        let currentIndex = 0;
+        let currentSpecies = "";
+        let correctAnswers = 0;
+        let incorrectAnswers = 0;
+
+        // Elementos del DOM
+        const loadingEl = document.getElementById("loading");
+        const imageEl = document.getElementById("speciesImage");
+        const inputEl = document.getElementById("speciesInput");
+        const checkBtn = document.getElementById("checkBtn");
+        const resultEl = document.getElementById("result");
+        const counterEl = document.getElementById("counter");
+        const correctCountEl = document.getElementById("correctCount");
+        const incorrectCountEl = document.getElementById("incorrectCount");
+        const modeButtons = document.querySelectorAll(".mode-btn");
+
+        function skipImage() {
+    resultEl.textContent = "⏭ Saltando a la siguiente imagen...";
+    resultEl.className = "skipped";
+    setTimeout(showNextImage, 500); // Pequeña animación antes de saltar
+}
+        
+        // Función para iniciar cualquier modo
+        function startMode(mode) {
+
+            isExamMode = (mode === "exam");
+    
+    // Mostrar/ocultar botón Saltar según el modo
+    const skipBtn = document.getElementById("skipBtn");
+    if (isExamMode) {
+        skipBtn.classList.add("hidden");
+    } else {
+        skipBtn.classList.remove("hidden");
+    }
+    // Resetear todo al iniciar un nuevo modo
+    resetButtons();
+    document.getElementById(`${mode}Btn`).classList.add("active");
+    
+    currentMode = mode;
+    currentIndex = 0;
+    correctAnswers = 0;
+    incorrectAnswers = 0;
+    isExamMode = (mode === "exam");
+    
+    // Mostrar el contenedor del juego y ocultar resultados
+    document.querySelector(".game-container").style.display = "block";
+    document.getElementById("resultsScreen").style.display = "none";
+    
+    if (mode === "exam") {
+        examScore = 0;
+        examResults = [];
+        startAdvancedExam();
+    } else {
+        currentList = config.species[mode].map(file => ({ file, category: mode }));
+        shuffleArray(currentList);
+    }
+    
+    updateStats();
+    showCurrentImage();
+    
+    // Configuración específica para el modo examen
+    if (isExamMode) {
+        document.getElementById("checkBtn").style.display = "none";
+        document.getElementById("speciesInput").placeholder = "Escribe y presiona Enter";
+        document.querySelector(".game-container").classList.add("exam-mode");
+    } else {
+        document.getElementById("checkBtn").style.display = "block";
+        document.getElementById("speciesInput").placeholder = "Escribe el nombre científico";
+        document.querySelector(".game-container").classList.remove("exam-mode");
+    }
+}
+
+        function showCurrentImage() {
+            if (!currentList.length) {
+                showError("No hay imágenes disponibles");
+                return;
+            }
+
+            const currentItem = currentList[currentIndex];
+            const filename = currentItem.file;
+            currentSpecies = filename.replace(/\.[^/.]+$/, "").replace(/_/g, " ");
+            
+            // Construir URL basada en la categoría del ítem actual
+            const imageUrl = `${config.baseUrl}${config.categories[currentItem.category]}${filename}`;
+            
+            console.log("Cargando imagen desde:", imageUrl); // Para depuración
+            
+            loadingEl.textContent = "Cargando imagen...";
+            imageEl.classList.add("hidden");
+            inputEl.value = "";
+            resultEl.textContent = "";
+            resultEl.className = "";
+            inputEl.focus();
+            
+            const img = new Image();
+            img.onload = function() {
+                loadingEl.classList.add("hidden");
+                imageEl.src = imageUrl;
+                imageEl.alt = currentSpecies;
+                imageEl.classList.remove("hidden");
+                updateCounter();
+            };
+            
+            img.onerror = function() {
+                showError(`No se pudo cargar: ${filename}`);
+                console.error("Error al cargar:", imageUrl);
+            };
+            
+            img.src = imageUrl;
+        }
+
+        function startAdvancedExam() {
+    const randomInvertebrados = getRandomItems(config.species.invertebrados, EXAM_CONFIG.invertebradosCount)
+                    .map(file => ({ file, category: "invertebrados" }));
+    const randomMoluscos = getRandomItems(config.species.moluscos, EXAM_CONFIG.moluscosCount)
+                    .map(file => ({ file, category: "moluscos" }));
+    const randomArtropodos = getRandomItems(config.species.artropodos, EXAM_CONFIG.artropodosCount)
+                    .map(file => ({ file, category: "artropodos" }));
+    const randomPeces = getRandomItems(config.species.peces, EXAM_CONFIG.pecesCount)
+                    .map(file => ({ file, category: "peces" }));
+    const randomAnfibios_Reptiles = getRandomItems(config.species.anfibios_reptiles, EXAM_CONFIG.anfibios_reptilesCount)
+                    .map(file => ({ file, category: "anfibios_reptiles" }));
+    const randomAves = getRandomItems(config.species.aves, EXAM_CONFIG.avesCount)
+                    .map(file => ({ file, category: "aves" }));
+    const randomMamiferos = getRandomItems(config.species.mamiferos, EXAM_CONFIG.mamiferosCount)
+                    .map(file => ({ file, category: "mamiferos" }));
+    const randomGimnospermas = getRandomItems(config.species.gimnospermas, EXAM_CONFIG.gimnospermasCount)
+                    .map(file => ({ file, category: "gimnospermas" }));
+    const randomMonocotiledoneas = getRandomItems(config.species.monocotiledoneas, EXAM_CONFIG.monocotiledoneasCount)
+                    .map(file => ({ file, category: "monocotiledoneas" }));
+    const randomDicotiledoneas = getRandomItems(config.species.dicotiledoneas, EXAM_CONFIG.dicotiledoneasCount)
+                    .map(file => ({ file, category: "dicotiledoneas" }));
+    const randomHongos = getRandomItems(config.species.hongos, EXAM_CONFIG.hongosCount)
+                    .map(file => ({ file, category: "hongos" }));
+    const randomAlgas = getRandomItems(config.species.algas, EXAM_CONFIG.algasCount)
+                    .map(file => ({ file, category: "algas" }));
+    const randomRocks = getRandomItems(config.species.rocas, EXAM_CONFIG.rocasCount)
+                    .map(file => ({ file, category: "rocas" }));
+    const randomFossils = getRandomItems(config.species.fosiles, EXAM_CONFIG.fosilesCount)
+                       .map(file => ({ file, category: "fosiles" }));
+    // ... (igual para las demás categorías)
+    
+    currentList = [...randomInvertebrados, ...randomMoluscos, ...randomArtropodos,
+    ...randomPeces, ...randomAnfibios_Reptiles, ...randomAves, ...randomMamiferos,
+    ...randomGimnospermas, ...randomMonocotiledoneas, randomDicotiledoneas,
+    ...randomHongos, ...randomAlgas, ...randomRocks, ...randomFossils];
+    shuffleArray(currentList); // Mezcla final entre categorías
+}
+
+function getRandomItems(array, count) {
+    // Copia del array original
+    const copy = [...array];
+    const result = [];
+    
+    // Algoritmo Fisher-Yates moderno
+    for (let i = copy.length - 1; i > 0 && result.length < count; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]]; // Intercambio
+        result.push(copy.pop()); // Tomamos el último elemento después del intercambio
+    }
+    
+    // Si aún necesitamos más elementos (caso cuando count > array.length/2)
+    while (result.length < count && copy.length > 0) {
+        result.push(copy.pop());
+    }
+    
+    return result;
+}
+
+function checkAnswer() {
+    if (!currentSpecies) return;
+    
+    const userAnswer = inputEl.value.trim().toLowerCase();
+    const correctAnswer = currentSpecies.toLowerCase();
+    const isCorrect = userAnswer === correctAnswer;
+    
+    // Guardar el resultado (solo para examen)
+    if (isExamMode) {
+        const result = {
+            image: currentList[currentIndex].file,
+            category: currentList[currentIndex].category,
+            userAnswer: userAnswer,
+            correctAnswer: correctAnswer,
+            isCorrect: isCorrect
+        };
+        examResults.push(result);
+        currentExamAnswers.push(result);
+    }
+    
+    if (isCorrect) {
+        correctAnswers++;
+        if (isExamMode) examScore++;
+        resultEl.textContent = "✅ ¡Correcto!";
+        resultEl.className = "correct";
+    } else {
+        incorrectAnswers++;
+        resultEl.textContent = `❌ Incorrecto. La respuesta es: ${currentSpecies}`;
+        resultEl.className = "incorrect";
+    }
+    
+    updateStats();
+    inputEl.value = "";
+    
+    // Comportamiento diferente según el modo
+    if (isExamMode) {
+        setTimeout(() => {
+            if (currentIndex < currentList.length - 1) {
+                showNextImage();
+            } else {
+                showExamResults();
+            }
+        }, 1500);
+    } else {
+        // En modos normales, avanzar automáticamente al acertar
+        if (isCorrect) {
+            setTimeout(showNextImage, 1000);
+        }
+    }
+}
+
+function showNextImage() {
+    currentIndex = (currentIndex + 1) % currentList.length;
+    
+    // Si hemos completado todas, mezclar de nuevo (solo modos normales)
+    if (currentIndex === 0 && !isExamMode) {
+        shuffleArray(currentList);
+    }
+    
+    showCurrentImage();
+}
+
+        function updateCounter() {
+            counterEl.textContent = `${currentIndex + 1} de ${currentList.length}`;
+        }
+
+        function updateStats() {
+            correctCountEl.textContent = correctAnswers;
+            incorrectCountEl.textContent = incorrectAnswers;
+        }
+
+        function showError(message) {
+            loadingEl.textContent = message;
+            loadingEl.classList.remove("hidden");
+            imageEl.classList.add("hidden");
+        }
+
+        function resetButtons() {
+            modeButtons.forEach(btn => btn.classList.remove("active"));
+        }
+
+        // Función para mezclar array (Fisher-Yates)
+        function shuffleArray(array) {
+    let currentIndex = array.length;
+    
+    while (currentIndex > 0) {
+        // Seleccionar un elemento restante
+        const randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        
+        // Intercambiar con el elemento actual
+        [array[currentIndex], array[randomIndex]] = 
+        [array[randomIndex], array[currentIndex]];
+    }
+    
+    return array;
+}
+        function showExamResults() {
+    // Ocultar el juego y mostrar resultados
+    document.querySelector(".game-container").style.display = "none";
+    document.getElementById("resultsScreen").style.display = "block";
+    
+    // Mostrar puntuación final
+    document.getElementById("finalScore").textContent = examScore;
+    
+    // Generar lista de resultados
+    const resultsList = document.getElementById("resultsList");
+    resultsList.innerHTML = "";
+    
+    examResults.forEach((result, index) => {
+        const item = document.createElement("div");
+        item.className = `result-item ${result.isCorrect ? 'correct' : 'incorrect'}`;
+        
+        const imgName = result.image.replace(/\.[^/.]+$/, "").replace(/_/g, " ");
+        const userAnswer = result.userAnswer || "(sin respuesta)";
+        
+        item.innerHTML = `
+            <span>${index + 1}. ${imgName}</span>
+            <span><strong>Tu respuesta:</strong> ${userAnswer}</span>
+            ${!result.isCorrect ? `<span><strong>Correcta:</strong> ${result.correctAnswer}</span>` : ''}
+        `;
+        
+        resultsList.appendChild(item);
+    });
+    
+    // Reiniciar variables para posible nuevo examen
+    currentExamAnswers = [];
+}
+
+function restartExam() {
+    document.querySelector(".game-container").style.display = "block";
+    document.getElementById("resultsScreen").style.display = "none";
+    examResults = [];
+    startMode("exam");
+}
+        // Actualiza los event listeners
+        document.getElementById("invertebradosBtn").addEventListener("click", () => startMode("invertebrados"));
+        document.getElementById("moluscosBtn").addEventListener("click", () => startMode("moluscos"));
+        document.getElementById("artropodosBtn").addEventListener("click", () => startMode("artropodos"));
+        document.getElementById("pecesBtn").addEventListener("click", () => startMode("peces"));
+        document.getElementById("anfibiosBtn").addEventListener("click", () => startMode("anfibios_reptiles"));
+        document.getElementById("avesBtn").addEventListener("click", () => startMode("aves"));
+        document.getElementById("mamiferosBtn").addEventListener("click", () => startMode("mamiferos"));
+        document.getElementById("gimnospermasBtn").addEventListener("click", () => startMode("gimnospermas"));
+        document.getElementById("monocotiledoneasBtn").addEventListener("click", () => startMode("monocodiledoneas"));
+        document.getElementById("dicotiledoneasBtn").addEventListener("click", () => startMode("dicotiledoneas"));
+        document.getElementById("hongosBtn").addEventListener("click", () => startMode("hongos"));
+        document.getElementById("algasBtn").addEventListener("click", () => startMode("algas"));
+        document.getElementById("rocasBtn").addEventListener("click", () => startMode("rocas"));
+        document.getElementById("fosilesBtn").addEventListener("click", () => startMode("fosiles"));
+        document.getElementById("examBtn").addEventListener("click", () => startMode("exam"));
+        document.getElementById("restartExamBtn").addEventListener("click", restartExam);
+        document.getElementById("skipBtn").addEventListener("click", skipImage);
+        
+        checkBtn.addEventListener("click", checkAnswer);
+        inputEl.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+        checkAnswer();
+        // En modos normales no limpiamos inmediatamente para permitir ver el feedback
+        if (isExamMode) {
+            inputEl.value = "";
+        }
+    }
+});
+
+        // Navegación con teclado
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight") showNextImage();
+        });
+
+        // Inicialización
+        inputEl.focus();
+    </script>
+</body>
+</html>
