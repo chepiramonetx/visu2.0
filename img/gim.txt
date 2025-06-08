@@ -1,0 +1,26 @@
+Abies alba.jpg
+Abies pinsapo.jpg
+Adiantum capillus-veneris.jpg
+Cupressus sempervirens.jpg
+Didymodon ferrugineus.jpg
+Equisetum palustre.jpeg
+Equisetum ramosissimum.jpg
+gim.txt
+Ginkgo biloba.jpg
+Isoetes lacustris.jpeg
+Juniperus communis.jpg
+Juniperus oxycedrus.jpg
+Juniperus phoenicea.jpg
+Juniperus thurifera.jpg
+Marchantia polymorpha.jpeg
+Phyllitis scolopendrium.jpg
+Pinus canariensis.jpeg
+Pinus halepensis.jpg
+Pinus nigra.jpg
+Pinus pinaster.jpg
+Pinus pinea.jpg
+Polypodium cambricum.jpeg
+Pteridium aquilinum.jpeg
+Taxus baccata.jpg
+Tetraclinis articulata.jpg
+Weltwitschia mirabilis.jpg
