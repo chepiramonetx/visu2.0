@@ -603,6 +603,8 @@
 "Chloris chloris.jpg",
 "Ciconia ciconia.jpg",
 "Ciconia nigra.jpg",
+"Circaetus gallicus.jpg",
+"Circaetus gallicus.png",
 "Coloeus monedula.jpg",
 "Columba livia.jpg",
 "Columba palumbus.jpg",
@@ -662,6 +664,8 @@
 "Podiceps cristatus.jpg",
 "Pyrrhocorax graculus.jpg",
 "Pyrrhocorax pyrrhocorax.jpg",
+"Ramphastos sulfuratus.jpg",
+"Ramphastos toco.jpg",
 "Recurvirostra avosetta.jpg",
 "Serinus serinus.jpg",
 "Spatula clypeata.jpg",
@@ -1188,7 +1192,9 @@ const EXAM_CONFIG = {
         document.querySelector(".game-container").classList.remove("exam-mode");
     }
 }
-
+function getSpeciesKey(filename) {
+    return filename.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+}
         function showCurrentImage() {
             if (!currentList.length) {
                 showError("No hay imágenes disponibles");
@@ -1229,6 +1235,39 @@ const EXAM_CONFIG = {
         }
 
         function startAdvancedExam() {
+        const usedSpecies = new Set();
+    currentList = [];
+    
+    // Función auxiliar para evitar duplicados
+    const addUniqueSpecies = (category, count) => {
+        const available = config.species[category].filter(file => {
+            const key = getSpeciesKey(file);
+            return !usedSpecies.has(key);
+        });
+        
+        const selected = getRandomItems(available, count);
+        selected.forEach(file => {
+            usedSpecies.add(getSpeciesKey(file));
+            currentList.push({ file, category });
+        });
+    };
+
+    // Usamos tus nombres originales (invertebradosCount, etc.)
+    addUniqueSpecies("invertebrados", EXAM_CONFIG.invertebradosCount);
+    addUniqueSpecies("moluscos", EXAM_CONFIG.moluscosCount);
+    addUniqueSpecies("artropodos", EXAM_CONFIG.artropodosCount);
+    addUniqueSpecies("peces", EXAM_CONFIG.pecesCount);
+    addUniqueSpecies("anfibios", EXAM_CONFIG.anfibiosCount);
+    addUniqueSpecies("aves", EXAM_CONFIG.avesCount);
+    addUniqueSpecies("mamiferos", EXAM_CONFIG.mamiferosCount);
+    addUniqueSpecies("gimnospermas", EXAM_CONFIG.gimnospermasCount);
+    addUniqueSpecies("monocotiledoneas", EXAM_CONFIG.monocotiledoneasCount);
+    addUniqueSpecies("dicotiledoneas", EXAM_CONFIG.dicotiledoneasCount);
+    addUniqueSpecies("hongos", EXAM_CONFIG.hongosCount);
+    addUniqueSpecies("algas", EXAM_CONFIG.algasCount);
+    addUniqueSpecies("rocas", EXAM_CONFIG.rocasCount);
+    addUniqueSpecies("fosiles", EXAM_CONFIG.fosilesCount);
+    
     const randomInvertebrados = getRandomItems(config.species.invertebrados, EXAM_CONFIG.invertebradosCount)
                     .map(file => ({ file, category: "invertebrados" }));
     const randomMoluscos = getRandomItems(config.species.moluscos, EXAM_CONFIG.moluscosCount)
@@ -1263,7 +1302,8 @@ const EXAM_CONFIG = {
     ...randomPeces, ...randomAnfibios, ...randomAves, ...randomMamiferos,
     ...randomGimnospermas, ...randomMonocotiledoneas, ...randomDicotiledoneas,
     ...randomHongos, ...randomAlgas, ...randomRocks, ...randomFossils];
-    shuffleArray(currentList); // Mezcla final entre categorías
+    shuffleArray(currentList); // Mezcla final entre categorías    
+    console.log(`Examen generado: ${currentList.length} preguntas únicas`);
 }
 
 function getRandomItems(array, count) {
